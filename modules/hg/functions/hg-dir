@@ -1,0 +1,6 @@
+# function git-dir {
+
+gohg root
+return $?
+
+# }

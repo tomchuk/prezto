@@ -413,6 +413,7 @@ if [[ "$key_bindings" == (emacs|) ]]; then
   bindkey -e
 elif [[ "$key_bindings" == vi ]]; then
   bindkey -v
+  export KEYTIMEOUT=1
 else
   print "prezto: editor: invalid key bindings: $key_bindings" >&2
 fi

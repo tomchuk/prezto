@@ -1,0 +1,191 @@
+#
+# Exposes Mercurial repository information via the $hg_info associative array.
+#
+# Authors:
+#   Thomas Achtemichuk <tom@tomchuk.com>
+#
+# Gets the Mercurial status information.
+function hg-info {
+  # Extended globbing is needed to parse repository status.
+  setopt LOCAL_OPTIONS
+  setopt EXTENDED_GLOB
+
+  local action
+  local action_format
+  local action_formatted
+  local added=0
+  local added_format
+  local added_formatted
+  local branch
+  local branch_format
+  local branch_formatted
+  local branch_info
+  local clean
+  local clean_formatted
+  local commit
+  local commit_format
+  local commit_formatted
+  local deleted=0
+  local deleted_format
+  local deleted_formatted
+  local dirty=0
+  local dirty_format
+  local dirty_formatted
+  local -A info_formats
+  local info_format
+  local modified=0
+  local modified_format
+  local modified_formatted
+  local renamed=0
+  local renamed_format
+  local renamed_formatted
+  local shelved=0
+  local shelved_format
+  local shelved_formatted
+  local status_cmd
+  local status_mode
+  local untracked=0
+  local untracked_format
+  local untracked_formatted
+  local resolved=0
+  local resolved_format
+  local resolved_formatted
+  local unresolved=0
+  local unresolved_format
+  local unresolved_formatted
+
+  # Clean up previous $hg_info.
+  unset hg_info
+  typeset -gA hg_info
+
+  # Return if not inside a Mercurial repository work tree.
+  if [[ ! -n "$(gohg root 2> /dev/null)" ]]; then
+    return 1
+  fi
+
+  # Format commit.
+  zstyle -s ':prezto:module:hg:info:commit' format 'commit_format'
+  if [[ -n "$commit_format" ]]; then
+    commit="$(hg id -i 2> /dev/null)"
+    if [[ -n "$commit" ]]; then
+      zformat -f commit_formatted "$commit_format" "c:$commit"
+    fi
+  fi
+
+  # Format shelved.
+  zstyle -s ':prezto:module:hg:info:shelved' format 'shelved_format'
+  if [[ -n "$shelved_format" ]]; then
+    shelved="$(hg shelve --list 2> /dev/null | wc -l | awk '{print $1}')"
+    if [[ "$shelved" -gt 0 ]]; then
+      zformat -f shelved_formatted "$shelved_format" "S:$shelved"
+    fi
+  fi
+
+  # Format action.
+  zstyle -s ':prezto:module:hg:info:action' format 'action_format'
+  if [[ -n "$action_format" ]]; then
+    if [[ -n "$(hg sum | grep 'commit.*(merge)' 2> /dev/null)" ]]; then
+      action=merge
+      zformat -f action_formatted "$action_format" "s:($action)"
+    fi
+  fi
+
+  # Get the branch.
+  branch="$(gohg book_or_branch)"
+
+  # Format branch.
+  zstyle -s ':prezto:module:hg:info:branch' format 'branch_format'
+  if [[ -n "$branch" && -n "$branch_format" ]]; then
+    zformat -f branch_formatted "$branch_format" "b:$branch"
+  fi
+
+  status_cmd="hg status -mard"
+  resolve_cmd="hg resolve -l"
+
+  # Get current status.
+  while IFS=$'\n' read line; do
+    # Count added, deleted, modified, untracked..
+    # T (type change) is undocumented, see http://git.io/FnpMGw.
+    # For a table of scenarii, see http://i.imgur.com/2YLu1.png.
+    [[ "$line" == ([A])\ * ]] && (( added++ ))
+    [[ "$line" == ([D])\ * ]] && (( deleted++ ))
+    [[ "$line" == ([M])\ * ]] && (( modified++ ))
+    [[ "$line" == \?\ * ]] && (( untracked++ ))
+    (( dirty++ ))
+  done < <(${(z)status_cmd} 2> /dev/null)
+
+  while IFS=$'\n' read line; do
+    [[ "$line" == ([R])\ * ]] && (( resolved++ ))
+    [[ "$line" == ([U])\ * ]] && (( unresolved++ ))
+  done < <(${(z)resolve_cmd} 2> /dev/null)
+
+
+  # Format added.
+  if (( added > 0 )); then
+    zstyle -s ':prezto:module:hg:info:added' format 'added_format'
+    zformat -f added_formatted "$added_format" "a:$added"
+  fi
+
+  # Format deleted.
+  if (( deleted > 0 )); then
+    zstyle -s ':prezto:module:hg:info:deleted' format 'deleted_format'
+    zformat -f deleted_formatted "$deleted_format" "d:$deleted"
+  fi
+
+  # Format modified.
+  if (( modified > 0 )); then
+    zstyle -s ':prezto:module:hg:info:modified' format 'modified_format'
+    zformat -f modified_formatted "$modified_format" "m:$modified"
+  fi
+
+  # Format resolved.
+  if (( resolved > 0 )); then
+    zstyle -s ':prezto:module:hg:info:resolved' format 'resolved_format'
+    zformat -f resolved_formatted "$resolved_format" "R:$resolved"
+  fi
+
+  # Format unresolved.
+  if (( unresolved > 0 )); then
+    zstyle -s ':prezto:module:hg:info:unresolved' format 'unresolved_format'
+    zformat -f unresolved_formatted "$unresolved_format" "U:$unresolved"
+  fi
+
+  # Format untracked.
+  if (( untracked > 0 )); then
+    zstyle -s ':prezto:module:hg:info:untracked' format 'untracked_format'
+    zformat -f untracked_formatted "$untracked_format" "u:$untracked"
+  fi
+
+  # Format dirty and clean.
+  if (( dirty > 0 )); then
+    zstyle -s ':prezto:module:hg:info:dirty' format 'dirty_format'
+    zformat -f dirty_formatted "$dirty_format" "D:$dirty"
+  else
+    zstyle -s ':prezto:module:hg:info:clean' format 'clean_formatted'
+  fi
+
+  # Format info.
+  zstyle -a ':prezto:module:hg:info:keys' format 'info_formats'
+  for info_format in ${(k)info_formats}; do
+    zformat -f REPLY "$info_formats[$info_format]" \
+      "a:$added_formatted" \
+      "b:$branch_formatted" \
+      "C:$clean_formatted" \
+      "c:$commit_formatted" \
+      "d:$deleted_formatted" \
+      "D:$dirty_formatted" \
+      "m:$modified_formatted" \
+      "s:$action_formatted" \
+      "S:$shelved_formatted" \
+      "R:$resolved_formatted" \
+      "U:$unresolved_formatted" \
+      "u:$untracked_formatted"
+    hg_info[$info_format]="$REPLY"
+  done
+
+  unset REPLY
+
+  return 0
+}
+
+hg-info "$@"
