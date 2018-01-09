@@ -21,8 +21,8 @@ zle -N down-line-or-beginning-search
 # Same bindings as ~/.vimrc
 bindkey -M vicmd 'j' down-line-or-beginning-search
 bindkey -M vicmd 'k' up-line-or-beginning-search
-bindkey -M vicmd 'l' backward-char
-bindkey -M vicmd ';' forward-char
+# bindkey -M vicmd 'l' backwardk-char
+# bindkey -M vicmd ';' forward-char
 
 # allow v to edit the command line (standard behaviour)
 autoload -Uz edit-command-line
