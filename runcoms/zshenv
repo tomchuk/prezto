@@ -48,6 +48,11 @@ export DJANGO_ENV=local
 export PYTHONDONTWRITEBYTECODE=1
 export NRUSER="Thomas Achtemichuk"
 
+export PATH="/usr/local/opt/openssl/bin:/usr/local/opt/curl/bin:/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+export MANPATH="/usr/local/opt/coreutils/libexec/gnuman:$MANPATH"
+export LDFLAGS="-L/usr/local/opt/openssl/lib -L/usr/local/opt/curl/lib"
+export CPPFLAGS="-I/usr/local/opt/openssl/include -I/usr/local/opt/curl/include"
+export PKG_CONFIG_PATH="/usr/local/opt/openssl/lib/pkgconfig:/usr/local/opt/curl/lib/pkgconfig"
 
 # ALIASES
 
@@ -124,12 +129,29 @@ alias f="ag --py --ignore='*migration*'"
 alias q="tail -f $TMPDIR/q"
 
 alias bs='cd ~/src/bs; workon bs'
-alias s="cd ~/src/bs/; workon bs; ./project/manage.py shell_plus --quiet-load"
-alias runserver="sudo lunchy stop nginx; sudo lunchy start nginx; workon bs; cd ~/src/bs; ./project/manage.py runserver_plus --traceback"
-alias celeryd='cd ~/src/bs/project; workon bs; celery worker -A celery_worker -l DEBUG'
 
-alias stops="sudo lunchy stop nginx; lunchy stop mysql; lunchy stop mongo; lunchy stop elastic; lunchy stop rabbit; lunchy stop redis; lunchy stop neo4j; lunchy stop postgres; lunchy stop memcached"
-alias starts="sudo lunchy start nginx; lunchy start mysql; lunchy start mongo; lunchy start elastic; lunchy start rabbit; lunchy start redis; lunchy start neo4j; lunchy start postgres; lunchy start memcached"
+function s() {
+  cd $(hg root -q 2> /dev/null || echo -n "$HOME/src/bs")
+  workon bs
+  ./project/manage.py shell_plus --quiet-load
+}
+
+function runserver() {
+  sudo brew services stop nginx
+  sudo brew services start nginx
+  workon bs
+  cd $(hg root -q 2> /dev/null || echo -n "$HOME/src/bs")
+  ./project/manage.py runserver_plus --traceback
+}
+
+function celeryd() {
+  workon bs
+  cd $(hg root -q 2> /dev/null || echo -n "$HOME/src/bs")/project
+  celery worker -A celery_worker -l DEBUG
+}
+
+alias stops="sudo brew services stop nginx; brew services stop mysql;  brew services stop elastic; brew services stop rabbit; brew services stop redis; brew services stop postgres; brew services stop memcached"
+alias starts="sudo brew services start nginx; brew services start mysql; brew services start elastic; brew services start rabbit; brew services start redis; brew services start postgres; brew services start memcached"
 
 ## Find files matching pattern
 function ff() {
@@ -155,4 +177,18 @@ function transcode() {
         -b:a 160k \
         -f mp4 \
         "$2"
+}
+
+function server() {
+  qemu-system-x86_64 \
+    -cpu host \
+    -machine pc-q35-3.0,accel=hvf \
+    -accel hvf,thread=multi \
+    -m size=4G\
+    -hda server.img \
+    -cdrom ubuntu1804.iso \
+    -netdev type=tap,ifname=tun0,script=/Users/thomas/.vm/qemu-ifup,downscript=no,id=net0 \
+    -device e1000,netdev=net0,mac=a0:99:9b:09:be:99 \
+    -runas thomas \
+
 }

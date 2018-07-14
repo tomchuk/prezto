@@ -91,7 +91,7 @@ function hg-info {
   fi
 
   # Get the branch.
-  branch="$(gohg book_or_branch)"
+  branch="$(gohg where)"
 
   # Format branch.
   zstyle -s ':prezto:module:hg:info:branch' format 'branch_format'
@@ -108,7 +108,7 @@ function hg-info {
     # T (type change) is undocumented, see http://git.io/FnpMGw.
     # For a table of scenarii, see http://i.imgur.com/2YLu1.png.
     [[ "$line" == ([A])\ * ]] && (( added++ ))
-    [[ "$line" == ([D])\ * ]] && (( deleted++ ))
+    [[ "$line" == ([R])\ * ]] && (( deleted++ ))
     [[ "$line" == ([M])\ * ]] && (( modified++ ))
     [[ "$line" == \?\ * ]] && (( untracked++ ))
     (( dirty++ ))

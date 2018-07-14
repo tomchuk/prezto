@@ -31,3 +31,6 @@ bindkey -M vicmd 'v' edit-command-line
 # Command + Arrow keys
 bindkey "\e[1~" beginning-of-line
 bindkey "\e[4~" end-of-line
+
+# Alt + . to insert last argument
+bindkey '\e.' insert-last-word
