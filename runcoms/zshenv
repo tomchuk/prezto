@@ -48,7 +48,6 @@ export DJANGO_ENV=local
 export PYTHONDONTWRITEBYTECODE=1
 export NRUSER="Thomas Achtemichuk"
 
-export PATH="/usr/local/opt/openssl/bin:/usr/local/opt/curl/bin:/usr/local/opt/coreutils/libexec/gnubin:$PATH"
 export MANPATH="/usr/local/opt/coreutils/libexec/gnuman:$MANPATH"
 export LDFLAGS="-L/usr/local/opt/openssl/lib -L/usr/local/opt/curl/lib"
 export CPPFLAGS="-I/usr/local/opt/openssl/include -I/usr/local/opt/curl/include"
