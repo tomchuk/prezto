@@ -39,15 +39,23 @@ fi
 
 function _python-workon-cwd {
   # Check if this is a Git repo
-  local GIT_REPO_ROOT=""
-  local GIT_TOPLEVEL="$(git rev-parse --show-toplevel 2> /dev/null)"
+  local REPO_ROOT=""
+  local REPO_DIR=".git"
+  local REPO_TOPLEVEL=""
+  REPO_TOPLEVEL="$(git rev-parse --show-toplevel 2> /dev/null)"
   if [[ $? == 0 ]]; then
-    GIT_REPO_ROOT="$GIT_TOPLEVEL"
+    REPO_ROOT="$REPO_TOPLEVEL"
+  else
+    REPO_TOPLEVEL="$(gohg root 2> /dev/null)"
+    if [[ $? == 0 ]]; then
+      REPO_ROOT="$REPO_TOPLEVEL"
+      REPO_DIR=".hg"
+    fi
   fi
   # Get absolute path, resolving symlinks
   local PROJECT_ROOT="${PWD:A}"
   while [[ "$PROJECT_ROOT" != "/" && ! -e "$PROJECT_ROOT/.venv" \
-            && ! -d "$PROJECT_ROOT/.git"  && "$PROJECT_ROOT" != "$GIT_REPO_ROOT" ]]; do
+            && ! -d "$PROJECT_ROOT/$REPO_DIR"  && "$PROJECT_ROOT" != "$REPO_ROOT" ]]; do
     PROJECT_ROOT="${PROJECT_ROOT:h}"
   done
   if [[ "$PROJECT_ROOT" == "/" ]]; then

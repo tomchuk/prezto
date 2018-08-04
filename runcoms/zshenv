@@ -41,11 +41,12 @@ export MANPAGER='less -X';
 export GREP_OPTIONS='--color=auto';
 
 # Python
-export WORKON_HOME=$HOME/.virtualenvs
+export WORKON_HOME=$HOME/.venvs
 export PIP_VIRTUALENV_BASE=$WORKON_HOME
 export PIP_RESPECT_VIRTUALENV=true
 export DJANGO_ENV=local
 export PYTHONDONTWRITEBYTECODE=1
+export PYTHONBREAKPOINT=ipdb.set_trace
 export NRUSER="Thomas Achtemichuk"
 
 export MANPATH="/usr/local/opt/coreutils/libexec/gnuman:$MANPATH"
@@ -125,7 +126,7 @@ alias afk="/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resource
 
 alias pyc="find . -name '__pycache__' -o -name '*.pyc' | xargs rm -rf"
 alias f="ag --py --ignore='*migration*'"
-alias q="tail -f $TMPDIR/q"
+alias q="tail -f ${TMPDIR}q"
 
 alias bs='cd ~/src/bs; workon bs'
 
@@ -136,8 +137,11 @@ function s() {
 }
 
 function runserver() {
-  sudo brew services stop nginx
-  sudo brew services start nginx
+  curl -s -m 1 localhost/nginx_status/ | grep -q 'Active connections'
+  if [ $? -ne 0 ]; then
+    sudo brew services stop nginx
+    sudo brew services start nginx
+  fi
   workon bs
   cd $(hg root -q 2> /dev/null || echo -n "$HOME/src/bs")
   ./project/manage.py runserver_plus --traceback
@@ -149,8 +153,8 @@ function celeryd() {
   celery worker -A celery_worker -l DEBUG
 }
 
-alias stops="sudo brew services stop nginx; brew services stop mysql;  brew services stop elastic; brew services stop rabbit; brew services stop redis; brew services stop postgres; brew services stop memcached"
-alias starts="sudo brew services start nginx; brew services start mysql; brew services start elastic; brew services start rabbit; brew services start redis; brew services start postgres; brew services start memcached"
+alias stops="sudo brew services stop nginx; brew services stop mysql@5.7;  brew services stop elasticsearch@1.3; brew services stop rabbitmq; brew services stop redis"
+alias starts="sudo brew services start nginx; brew services start mysql@5.7; brew services start elasticsearch@1.3; brew services start rabbitmq; brew services start redis"
 
 ## Find files matching pattern
 function ff() {
