@@ -48,11 +48,13 @@ export DJANGO_ENV=local
 export PYTHONDONTWRITEBYTECODE=1
 export PYTHONBREAKPOINT=ipdb.set_trace
 export NRUSER="Thomas Achtemichuk"
+export SKIP_SNYK=1
 
 export MANPATH="/usr/local/opt/coreutils/libexec/gnuman:$MANPATH"
-export LDFLAGS="-L/usr/local/opt/openssl/lib -L/usr/local/opt/curl/lib"
-export CPPFLAGS="-I/usr/local/opt/openssl/include -I/usr/local/opt/curl/include"
-export PKG_CONFIG_PATH="/usr/local/opt/openssl/lib/pkgconfig:/usr/local/opt/curl/lib/pkgconfig"
+export LDFLAGS="-L/usr/local/opt/openssl@1.1/lib -L/usr/local/opt/curl/lib -L/usr/local/opt/mysql@5.7/lib -L/usr/local/opt/ncurses/lib -L/usr/local/opt/qt/lib -L/usr/local/opt/readline/lib -L/usr/local/opt/ruby/lib -L/usr/local/opt/sqlite/lib -L/usr/local/opt/zlib/lib"
+export CPPFLAGS="-I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/curl/include -I/usr/local/opt/mysql@5.7/include -I/usr/local/opt/ncurses/include -I/usr/local/opt/qt/include -I/usr/local/opt/readline/include -I/usr/local/opt/ruby/include -I/usr/local/opt/sqlite/include -I/usr/local/opt/zlib/include"
+export PKG_CONFIG_PATH="/usr/local/opt/openssl@1.1/lib/pkgconfig:/usr/local/opt/curl/lib/pkgconfig:/usr/local/opt/mysql@5.7/lib/pkgconfig:/usr/local/opt/ncurses/lib/pkgconfig:/usr/local/opt/qt/lib/pkgconfig:/usr/local/opt/readline/lib/pkgconfig:/usr/local/opt/ruby/lib/pkgconfig:/usr/local/opt/sqlite/lib/pkgconfig:/usr/local/opt/zlib/lib/pkgconfig"
+export DYLD_LIBRARY_PATH="/usr/local/opt/openssl@1.1/lib:/usr/local/opt/curl/lib:/usr/local/opt/mysql@5.7/lib:/usr/local/opt/ncurses/lib:/usr/local/opt/qt/lib:/usr/local/opt/readline/lib:/usr/local/opt/ruby/lib:/usr/local/opt/sqlite/lib:/usr/local/opt/zlib/lib:$DYLD_LIBRARY_PATH"
 
 # ALIASES
 
@@ -125,10 +127,12 @@ alias afk="/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resource
 
 
 alias pyc="find . -name '__pycache__' -o -name '*.pyc' | xargs rm -rf"
-alias f="ag --py --ignore='*migration*'"
+alias f="ag --py --ignore='*migration*' --ignore='*tests*'"
 alias q="tail -f ${TMPDIR}q"
 
 alias bs='cd ~/src/bs; workon bs'
+
+alias pass='head /dev/urandom | tr -dc "A-Za-z0-9!@#$%^-_+:" | head -c 32 | tee >(pbcopy)'
 
 function s() {
   cd $(hg root -q 2> /dev/null || echo -n "$HOME/src/bs")
@@ -137,7 +141,7 @@ function s() {
 }
 
 function runserver() {
-  curl -s -m 1 localhost/nginx_status/ | grep -q 'Active connections'
+  curl -s -m 8 https://backstage.local/nginx_status/ | grep -q 'Active connections'
   if [ $? -ne 0 ]; then
     sudo brew services stop nginx
     sudo brew services start nginx
@@ -194,4 +198,10 @@ function server() {
     -device e1000,netdev=net0,mac=a0:99:9b:09:be:99 \
     -runas thomas \
 
+}
+
+function drop() {
+  echo $1
+  rsync -a "$1" "tomchuk.com:/var/www/tomchuk.com/drop/$1"
+  echo "https://tomchuk.com/drop/${1}" | tee >(pbcopy)
 }
